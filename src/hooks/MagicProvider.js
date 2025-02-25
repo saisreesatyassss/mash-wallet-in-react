@@ -1,48 +1,68 @@
-import { getChainId, getNetworkUrl } from '../utils/network';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { Magic } from 'magic-sdk';
 import { OAuthExtension } from '@magic-ext/oauth';
-import { Magic as MagicBase } from 'magic-sdk';
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
+const MagicContext = createContext();
 
-const MagicContext = createContext({
-  magic: null,
-});
-
-export const useMagic = () => useContext(MagicContext);
-
-const MagicProvider = ({ children }) => {
+export const MagicProvider = ({ children }) => {
   const [magic, setMagic] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-  console.log('Initializing Magic SDK...');
-    console.log('Using Magic API Key:', process.env.REACT_APP_MAGIC_API_KEY);
+    const initializeMagic = async () => {
+      setIsLoading(true);
+      try {
+        // Get network info from localStorage (set during login)
+        const networkData = localStorage.getItem('selectedNetwork');
+        const parsedNetwork = networkData ? JSON.parse(networkData) : {
+          chainId: 137, // Default to Polygon Mainnet
+          rpcUrl: 'https://polygon-rpc.com/'
+        };
 
-  if (process.env.REACT_APP_MAGIC_API_KEY) {
-    console.log('Using Magic API Key:', process.env.REACT_APP_MAGIC_API_KEY);
-    
-    const magicInstance = new MagicBase(process.env.REACT_APP_MAGIC_API_KEY, {
-      network: {
-        rpcUrl: getNetworkUrl(),
-        chainId: getChainId(),
-      },
-      extensions: [new OAuthExtension()],
-    });
-
-    console.log('Magic Instance Created:', magicInstance);
-    setMagic(magicInstance);
-  } else {
-    console.error('Magic API Key is missing');
-  }
-}, []);
-
-
-  const value = useMemo(() => {
-    return {
-      magic,
+        console.log("Initializing Magic with network:", parsedNetwork);
+        
+        // Create a new Magic instance with the appropriate network
+        const magicInstance = new Magic(process.env.REACT_APP_MAGIC_API_KEY, {
+          network: {
+            rpcUrl: parsedNetwork.rpcUrl,
+            chainId: parsedNetwork.chainId,
+          },
+          extensions: [new OAuthExtension()],
+        });
+        
+        setMagic(magicInstance);
+      } catch (error) {
+        console.error("Error initializing Magic in provider:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
-  }, [magic]);
 
-  return <MagicContext.Provider value={value}>{children}</MagicContext.Provider>;
+    initializeMagic();
+    
+    // Add event listener for storage changes to detect network changes
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'selectedNetwork') {
+        initializeMagic();
+      }
+    });
+    
+    return () => {
+      window.removeEventListener('storage', () => {});
+    };
+  }, []);
+
+  return (
+    <MagicContext.Provider value={{ magic, isLoading }}>
+      {children}
+    </MagicContext.Provider>
+  );
 };
 
-export default MagicProvider;
+export const useMagic = () => {
+  const context = useContext(MagicContext);
+  if (context === undefined) {
+    throw new Error('useMagic must be used within a MagicProvider');
+  }
+  return context;
+};

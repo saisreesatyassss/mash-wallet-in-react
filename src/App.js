@@ -1,31 +1,42 @@
-import './App.css';
-import { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import MagicProvider from './hooks/MagicProvider';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { MagicProvider } from './hooks/MagicProvider';
 import Login from './components/login';
 import Dashboard from './components/Dashboard';
+import './App.css';
 
 function App() {
-  const [token, setToken] = useState('');
+  const [token, setToken] = useState(localStorage.getItem('token') || '');
 
   useEffect(() => {
-    setToken(localStorage.getItem('token') ?? '');
+    const storedToken = localStorage.getItem('token');
+    if (storedToken) {
+      setToken(storedToken);
+    }
   }, []);
 
   return (
-    <MagicProvider>
-      <Router>
-        <div className="App">
-          <ToastContainer />
+    <Router>
+      <MagicProvider>
+        <div className="app-container">
           <Routes>
-            <Route path="/" element={<Login token={token} setToken={setToken} />} />
-            <Route path="/dashboard" element={<Dashboard token={token} setToken={setToken} />} />
+            <Route 
+              path="/" 
+              element={token ? <Navigate to="/dashboard" /> : <Login token={token} setToken={setToken} />} 
+            />
+            <Route 
+              path="/login" 
+              element={token ? <Navigate to="/dashboard" /> : <Login token={token} setToken={setToken} />} 
+            />
+            <Route 
+              path="/dashboard" 
+              element={token ? <Dashboard token={token} setToken={setToken} /> : <Navigate to="/login" />} 
+            />
+            <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </div>
-      </Router>
-    </MagicProvider>
+      </MagicProvider>
+    </Router>
   );
 }
 
