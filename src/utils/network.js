@@ -54,39 +54,9 @@ export const getChainId = () => {
       return null;
   }
 };
+ 
 
-export const getNetworkToken = () => {
-  switch (process.env.REACT_APP_BLOCKCHAIN_NETWORK) {
-    case Network.POLYGON_AMOY:
-    case Network.POLYGON:
-      return 'MATIC';
-    case Network.ETHEREUM:
-    case Network.ETHEREUM_SEPOLIA:
-    case Network.ZKSYNC:
-    case Network.ZKSYNC_SEPOLIA:
-      return 'ETH';
-    case Network.ETHERLINK:
-    case Network.ETHERLINK_TESTNET:
-      return 'XTZ';
-    default:
-      return null;
-  }
-};
-
-export const getFaucetUrl = () => {
-  switch (process.env.REACT_APP_BLOCKCHAIN_NETWORK) {
-    case Network.POLYGON_AMOY:
-      return 'https://faucet.polygon.technology/';
-    case Network.ETHEREUM_SEPOLIA:
-      return 'https://sepoliafaucet.com/';
-    case Network.ETHERLINK_TESTNET:
-      return 'https://faucet.etherlink.com/';
-    case Network.ZKSYNC_SEPOLIA:
-      return 'https://faucet.quicknode.com/ethereum/sepolia';
-    default:
-      return null;
-  }
-};
+ 
 
 export const getNetworkName = () => {
   switch (process.env.REACT_APP_BLOCKCHAIN_NETWORK) {
@@ -110,43 +80,5 @@ export const getNetworkName = () => {
       return null;
   }
 };
-
-export const getBlockExplorer = (address) => {
-  switch (process.env.REACT_APP_BLOCKCHAIN_NETWORK) {
-    case Network.POLYGON:
-      return `https://polygonscan.com/address/${address}`;
-    case Network.POLYGON_AMOY:
-      return `https://www.oklink.com/amoy/address/${address}`;
-    case Network.ETHEREUM:
-      return `https://etherscan.io/address/${address}`;
-    case Network.ETHEREUM_SEPOLIA:
-      return `https://sepolia.etherscan.io/address/${address}`;
-    case Network.ETHERLINK:
-      return `https://explorer.etherlink.com/address/${address}`;
-    case Network.ETHERLINK_TESTNET:
-      return `https://testnet-explorer.etherlink.com/address/${address}`;
-    case Network.ZKSYNC:
-      return `https://explorer.zksync.io/address/${address}`;
-    case Network.ZKSYNC_SEPOLIA:
-      return `https://sepolia.explorer.zksync.io/address/${address}`;
-    default:
-      return null;
-  }
-};
-
-export const isEip1559Supported = () => {
-  switch (process.env.REACT_APP_BLOCKCHAIN_NETWORK) {
-    case Network.ETHEREUM_SEPOLIA:
-    case Network.ETHEREUM:
-      return true;
-    case Network.ZKSYNC:
-    case Network.ZKSYNC_SEPOLIA:
-    case Network.POLYGON:
-    case Network.POLYGON_AMOY:
-    case Network.ETHERLINK:
-    case Network.ETHERLINK_TESTNET:
-      return false;
-    default:
-      return false;
-  }
-};
+ 
+ 

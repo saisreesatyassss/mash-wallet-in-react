@@ -1,10 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { useMagic } from '../hooks/MagicProvider'; // Assuming you have a custom hook for Magic instance
-import useWeb3 from '../hooks/Web3'; // Custom hook for web3 functionality
-import { logout } from '../utils/common'; // Assuming this handles logout logic
-import Divider from '../components/ui/Divider'; // Assuming UI components are available
-import Spinner from '../components/ui/Spinner';
-import { getNetworkName, getNetworkToken } from '../utils/network'; // Utility functions for network info
+import { useMagic } from '../hooks/MagicProvider'; 
+import useWeb3 from '../hooks/Web3';
+import { logout } from '../utils/common'; 
+import { getNetworkName } from '../utils/network';
 import Card from '../components/ui/Card';
 import CardLabel from '../components/ui/CardLabel';
 
@@ -71,25 +69,9 @@ const UserInfo = ({ token, setToken }) => {
         <div className="green-dot" />
         <div className="connected">Connected to {getNetworkName()}</div>
       </div>
-      <Divider />
-      <CardLabel leftHeader="Address" rightAction={!publicAddress ? <Spinner /> : <div onClick={copy}>{copied}</div>} />
       <div className="code">{publicAddress?.length === 0 ? 'Fetching address..' : publicAddress}</div>
-      <Divider />
-      <CardLabel
-        leftHeader="Balance"
-        rightAction={
-          isRefreshing ? (
-            <div className="loading-container">
-              <Spinner />
-            </div>
-          ) : (
-            <div onClick={refresh}>Refresh</div>
-          )
-        }
-      />
-      <div className="code">
-        {balance.substring(0, 7)} {getNetworkToken()}
-      </div>
+
+
     </Card>
   );
 };
