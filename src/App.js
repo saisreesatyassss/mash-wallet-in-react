@@ -4,6 +4,7 @@ import { MagicProvider } from './hooks/MagicProvider';
 import Login from './components/login';
 import Dashboard from './components/Dashboard';
 import './App.css';
+import MultiWalletConnector from './components/wallets';
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token') || '');
@@ -27,6 +28,10 @@ function App() {
             <Route 
               path="/login" 
               element={token ? <Navigate to="/dashboard" /> : <Login token={token} setToken={setToken} />} 
+            />
+            <Route 
+              path="/wallet" 
+              element={token ? <Navigate to="/dashboard" /> : <MultiWalletConnector/>} 
             />
             <Route 
               path="/dashboard" 

@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Magic } from 'magic-sdk';
 import { OAuthExtension } from '@magic-ext/oauth';
-import showToast from '../utils/showToast';  
-import Spinner from '../components/ui/Spinner';  
-import { saveUserInfo } from '../utils/common';  
-import Card from '../components/ui/Card';  
-import CardHeader from '../components/ui/CardHeader';  
-import FormInput from '../components/ui/FormInput';  
+import { ConnectExtension } from '@magic-ext/connect';
+import showToast from '../utils/showToast';
+import Spinner from '../components/ui/Spinner';
+import { saveUserInfo } from '../utils/common';
+import Card from '../components/ui/Card';
+import CardHeader from '../components/ui/CardHeader';
+import FormInput from '../components/ui/FormInput';
+import MultiWalletConnector from './wallets';
 
 // Network configurations with consistent data
 const networks = [
@@ -25,6 +27,8 @@ const Login = ({ token, setToken }) => {
   const [isLoginInProgress, setLoginInProgress] = useState(false);
   const [selectedNetwork, setSelectedNetwork] = useState(networks[0]);
   const [magic, setMagic] = useState(null);
+  const [error, setError] = useState(null);
+  const [account, setAccount] = useState(null);
 
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
@@ -37,16 +41,29 @@ const Login = ({ token, setToken }) => {
     // When the network selection changes, create a new Magic instance
     const initializeMagic = async () => {
       try {
-        // Create a new Magic instance with the selected network
+        // Make sure the API key is available
+        if (!process.env.REACT_APP_MAGIC_API_KEY) {
+          console.error("Magic API key is missing");
+          setError("Magic API key is not configured. Check your environment variables.");
+          return;
+        }
+
+        console.log("Initializing Magic with API key and network:", selectedNetwork.name);
+        
+        // Create a new Magic instance with the selected network and connect extension
         const magicInstance = new Magic(process.env.REACT_APP_MAGIC_API_KEY, {
           network: {
             rpcUrl: selectedNetwork.rpcUrl,
             chainId: selectedNetwork.chainId,
           },
-          extensions: [new OAuthExtension()],
+          extensions: [
+            new OAuthExtension(),
+            new ConnectExtension()
+          ],
         });
         
         setMagic(magicInstance);
+        setError(null);
         
         // Save to localStorage for MagicProvider to use
         localStorage.setItem('selectedNetwork', JSON.stringify({
@@ -56,11 +73,17 @@ const Login = ({ token, setToken }) => {
         }));
       } catch (error) {
         console.error("Error initializing Magic:", error);
+        setError("Failed to initialize Magic SDK: " + error.message);
         showToast({ message: "Failed to initialize connection", type: 'error' });
       }
     };
     
     initializeMagic();
+
+    // Clean up function
+    return () => {
+      // Any cleanup if needed when network changes
+    };
   }, [selectedNetwork]);
 
   const handleLogin = async () => {
@@ -72,6 +95,7 @@ const Login = ({ token, setToken }) => {
     try {
       setLoginInProgress(true);
       setEmailError(false);
+      setError(null);
 
       if (!magic) throw new Error('Magic instance not initialized');
 
@@ -95,19 +119,40 @@ const Login = ({ token, setToken }) => {
       saveUserInfo(token, 'EMAIL', metadata.publicAddress);
       setEmail('');
       
-      // Trigger a reload to ensure MagicProvider re-initializes with the correct network
-      window.location.href = '/dashboard';
+      showToast({ message: "Login successful!", type: 'success' });
+      
+      // Redirect to dashboard
+      navigate('/dashboard');
     } catch (e) {
       console.error("Login error:", e);
+      setError("Login failed: " + e.message);
       showToast({ message: e.message || 'Unexpected error occurred', type: 'error' });
     } finally {
       setLoginInProgress(false);
     }
   };
 
+
+  const connectWithMetaMask = async () => {
+    
+      navigate('/wallets'); // Example redirect
+      
+   
+  };
+ 
+ 
+
+
   return (
     <Card>
       <CardHeader>Log in or Sign up</CardHeader>
+      
+      {error && (
+        <div className="error-banner">
+          <p className="error-message">{error}</p>
+        </div>
+      )}
+      
       <p className="text-center mb-4">Select a Network</p>
       <select
         className="network-dropdown"
@@ -124,23 +169,36 @@ const Login = ({ token, setToken }) => {
           <option key={network.chainId} value={network.name}>{network.name}</option>
         ))}
       </select>
-      <p className="text-center mb-4">Enter your email</p>
-      <FormInput
-        onChange={(e) => {
-          if (emailError) setEmailError(false);
-          setEmail(e.target.value);
-        }}
-        placeholder="Email"
-        value={email}
-      />
-      {emailError && <span className="error">Enter a valid email</span>}
-      <button
-        className="login-button"
-        disabled={isLoginInProgress || email.length === 0}
-        onClick={handleLogin}
-      >
-        {isLoginInProgress ? <Spinner /> : 'Continue'}
-      </button>
+      
+      <div className="login-options-container">
+        <div className="login-option">
+          <p className="text-center mb-4">Login with Email</p>
+          <FormInput
+            onChange={(e) => {
+              if (emailError) setEmailError(false);
+              setEmail(e.target.value);
+            }}
+            placeholder="Email"
+            value={email}
+          />
+          {emailError && <span className="error">Enter a valid email</span>}
+          <button
+            className="login-button"
+            disabled={isLoginInProgress || email.length === 0 || !magic}
+            onClick={handleLogin}
+          >
+            {isLoginInProgress ? <Spinner /> : 'Continue with Email'}
+          </button>
+        </div>
+        
+        <div className="login-divider">
+          <span>OR</span>
+        </div>
+        
+        <div className="wallet-options">
+  <MultiWalletConnector/>
+        </div>
+      </div>
     </Card>
   );
 };
